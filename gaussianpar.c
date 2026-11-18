@@ -10,7 +10,7 @@
 #include <pthread.h>
 
 #define MAX_SIZE 4096
-#define THREAD_COUNT 8
+#define THREAD_COUNT 16
 
 struct thread_args
 {
