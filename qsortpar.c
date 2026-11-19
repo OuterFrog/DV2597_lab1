@@ -32,7 +32,7 @@ struct thread_args
 
 static int *v;
 
-#define MAX_THREADS 32
+#define MAX_THREADS 128
 
 static void
 print_array(void)
@@ -128,7 +128,7 @@ void *thread_quicksort(void *buf)
 
     /* sort the two sub arrays */
 
-    if (depth * (depth + 1) < MAX_THREADS)
+    if (depth * (depth + 1) + 2 < MAX_THREADS)
     {
         pthread_t threads[2];
         struct thread_args args[2];
