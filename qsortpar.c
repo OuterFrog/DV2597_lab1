@@ -31,7 +31,7 @@ struct thread_args
 
 static int *v;
 
-#define MAX_THREADS 4096
+#define MAX_THREADS 8
 long thread_count = 0;
 pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
@@ -128,10 +128,10 @@ void *thread_quicksort(void *buf)
 
     /* sort the two sub arrays */
     pthread_mutex_lock(&lock);
-    bool create_threads = thread_count <= MAX_THREADS - 2;
+    bool create_threads = thread_count < MAX_THREADS;
     if(create_threads)
     {
-        thread_count += 2;
+        thread_count++;
     }
     pthread_mutex_unlock(&lock);
 
@@ -160,14 +160,15 @@ void *thread_quicksort(void *buf)
             args[1].v = v;
             args[1].low = pivot_index + 1;
             args[1].high = high;
-            pthread_create(&(threads[1]), NULL, thread_quicksort, (void *)&args[1]);
+            thread_quicksort(&args[1]);
+            //pthread_create(&(threads[1]), NULL, thread_quicksort, (void *)&args[1]);
         }
-        else
-        {
-            pthread_mutex_lock(&lock);
-            thread_count--;
-            pthread_mutex_unlock(&lock);
-        }
+        // else
+        // {
+        //     pthread_mutex_lock(&lock);
+        //     thread_count--;
+        //     pthread_mutex_unlock(&lock);
+        // }
 
         if (low < pivot_index)
         {
@@ -176,13 +177,13 @@ void *thread_quicksort(void *buf)
             thread_count --;
             pthread_mutex_unlock(&lock);
         }
-        if (pivot_index < high)
-        {
-            pthread_join(threads[1], NULL);
-            pthread_mutex_lock(&lock);
-            thread_count--;
-            pthread_mutex_unlock(&lock);
-        }
+        // if (pivot_index < high)
+        // {
+        //     pthread_join(threads[1], NULL);
+        //     pthread_mutex_lock(&lock);
+        //     thread_count--;
+        //     pthread_mutex_unlock(&lock);
+        // }
         
     }
     else
