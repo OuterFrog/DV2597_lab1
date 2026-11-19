@@ -28,6 +28,8 @@ matrix A;           /* matrix A		*/
 double b[MAX_SIZE]; /* vector b             */
 double y[MAX_SIZE]; /* vector y             */
 
+unsigned int rows_per_thread = MAX_SIZE / THREAD_COUNT;
+
 /* forward declarations */
 void work(void);
 void Init_Matrix(void);
@@ -48,12 +50,8 @@ int main(int argc, char **argv)
         Print_Matrix();
 }
 
-void* thread_work(void* buf)
+inline void thread_work_cyclic(const unsigned int id, const unsigned int k)
 {
-    struct thread_args *args = (struct thread_args *)buf;
-    unsigned int id = args->id;
-    unsigned int k = args->k;
-
     // cyclic
     for (int i = k + 1 + id; i < N; i += THREAD_COUNT)
     {
@@ -62,6 +60,33 @@ void* thread_work(void* buf)
         b[i] = b[i] - A[i][k] * y[k];
         A[i][k] = 0.0;
     }
+}
+
+inline void thread_work_block(const unsigned int id, const unsigned int k)
+{
+    // block-based
+    for (int i = id * rows_per_thread; i < N && i < (id + 1) * rows_per_thread; i++)
+    {
+        if(i < k + 1)
+            continue;
+
+        for (int j = k + 1; j < N; j++)
+            A[i][j] = A[i][j] - A[i][k] * A[k][j]; /* Elimination step */
+        b[i] = b[i] - A[i][k] * y[k];
+        A[i][k] = 0.0;
+    }
+}
+
+void* thread_work(void* buf)
+{
+    struct thread_args *args = (struct thread_args *)buf;
+    unsigned int id = args->id;
+    unsigned int k = args->k;
+
+    // rows_per_thread = N / THREAD_COUNT;
+    // thread_work_block(id, k);
+
+    thread_work_cyclic(id, k);
 
     return NULL;
 }
@@ -85,17 +110,31 @@ void work(void)
         y[k] = b[k] / A[k][k];
         A[k][k] = 1.0;
 
-        for(id = 0; id < THREAD_COUNT; id++)
+        if(N - k > 700){
+            for (id = 0; id < THREAD_COUNT; id++)
+            {
+                args[id].id = id;
+                args[id].k = k;
+                pthread_create(&(threads[id]), NULL, thread_work, (void *)&args[id]);
+            }
+
+            for (id = 0; id < THREAD_COUNT; id++)
+            {
+                pthread_join(threads[id], NULL);
+            }
+        }
+        else
         {
-            args[id].id = id;
-            args[id].k = k;
-            pthread_create(&(threads[id]), NULL, thread_work, (void *)&args[id]);
+            // do sequential instead
+            for (i = k + 1; i < N; i++)
+            {
+                for (j = k + 1; j < N; j++)
+                    A[i][j] = A[i][j] - A[i][k] * A[k][j]; /* Elimination step */
+                b[i] = b[i] - A[i][k] * y[k];
+                A[i][k] = 0.0;
+            }
         }
 
-        for (id = 0; id < THREAD_COUNT; id++)
-        {
-            pthread_join(threads[id], NULL);
-        }
     }
 }
 
