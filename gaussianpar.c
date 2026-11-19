@@ -214,7 +214,7 @@ void *init_multithreaded_rand(void *buf)
     return NULL;
 }
 
-void Init_Matrix()
+void Init_Matrix_Par()
 {
     int i, j;
 
@@ -260,6 +260,54 @@ void Init_Matrix()
         }
 
         free(threads);
+    }
+
+    /* Initialize vectors b and y */
+    for (i = 0; i < N; i++)
+    {
+        b[i] = 2.0;
+        y[i] = 1.0;
+    }
+
+    printf("done \n\n");
+    if (PRINT == 1)
+        Print_Matrix();
+}
+
+void Init_Matrix()
+{
+    int i, j;
+
+    printf("\nsize      = %dx%d ", N, N);
+    printf("\nmaxnum    = %d \n", maxnum);
+    printf("Init	  = %s \n", Init);
+    printf("Initializing matrix...");
+
+    if (strcmp(Init, "rand") == 0)
+    {
+        for (i = 0; i < N; i++)
+        {
+            for (j = 0; j < N; j++)
+            {
+                if (i == j) /* diagonal dominance */
+                    A[i][j] = (double)(rand() % maxnum) + 5.0;
+                else
+                    A[i][j] = (double)(rand() % maxnum) + 1.0;
+            }
+        }
+    }
+    if (strcmp(Init, "fast") == 0)
+    {
+        for (i = 0; i < N; i++)
+        {
+            for (j = 0; j < N; j++)
+            {
+                if (i == j) /* diagonal dominance */
+                    A[i][j] = 5.0;
+                else
+                    A[i][j] = 2.0;
+            }
+        }
     }
 
     /* Initialize vectors b and y */
