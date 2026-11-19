@@ -10,7 +10,7 @@
 #include <pthread.h>
 
 #define MAX_SIZE 4096
-#define THREAD_COUNT 8
+#define THREAD_COUNT 4
 
 struct thread_args
 {
@@ -28,7 +28,7 @@ matrix A;           /* matrix A		*/
 double b[MAX_SIZE]; /* vector b             */
 double y[MAX_SIZE]; /* vector y             */
 
-unsigned int rows_per_thread = MAX_SIZE / THREAD_COUNT;
+unsigned int global_rows_per_thread = MAX_SIZE / THREAD_COUNT;
 
 /* forward declarations */
 void work(void);
@@ -65,11 +65,14 @@ inline void thread_work_cyclic(const unsigned int id, const unsigned int k)
 inline void thread_work_block(const unsigned int id, const unsigned int k)
 {
     // block-based
-    for (int i = id * rows_per_thread; i < N && i < (id + 1) * rows_per_thread; i++)
-    {
-        if(i < k + 1)
-            continue;
 
+    int rows_left = N - k - 1;
+    int rows_per_thread = (rows_left) / THREAD_COUNT;
+    int start_row = (k + 1) + rows_per_thread * id;
+    int end_row = id == THREAD_COUNT - 1 ? N : (k + 1) + rows_per_thread * (id + 1);
+
+    for (int i = start_row; i < end_row; i++)
+    {
         for (int j = k + 1; j < N; j++)
             A[i][j] = A[i][j] - A[i][k] * A[k][j]; /* Elimination step */
         b[i] = b[i] - A[i][k] * y[k];
@@ -83,10 +86,10 @@ void* thread_work(void* buf)
     unsigned int id = args->id;
     unsigned int k = args->k;
 
-    // rows_per_thread = N / THREAD_COUNT;
-    // thread_work_block(id, k);
+    //rows_per_thread = N / THREAD_COUNT;
+    thread_work_block(id, k);
 
-    thread_work_cyclic(id, k);
+    //thread_work_cyclic(id, k);
 
     return NULL;
 }
@@ -110,7 +113,7 @@ void work(void)
         y[k] = b[k] / A[k][k];
         A[k][k] = 1.0;
 
-        if(N - k > 700){
+        if(N - k > 0){
             for (id = 0; id < THREAD_COUNT; id++)
             {
                 args[id].id = id;
