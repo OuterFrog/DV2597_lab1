@@ -16,6 +16,7 @@ struct thread_args
     int *v;
     unsigned low;
     unsigned high;
+    unsigned depth;
 };
 
 #define KILO (1024)
@@ -31,9 +32,7 @@ struct thread_args
 
 static int *v;
 
-#define MAX_THREADS 16
-long thread_count = 0;
-pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+#define MAX_THREADS 32
 
 static void
 print_array(void)
@@ -113,6 +112,7 @@ void *thread_quicksort(void *buf)
     int *v = args->v;
     unsigned low = args->low;
     unsigned high = args->high;
+    unsigned depth = args->depth;
 
     unsigned pivot_index;
 
@@ -127,32 +127,20 @@ void *thread_quicksort(void *buf)
     pivot_index = partition(v, low, high, pivot_index);
 
     /* sort the two sub arrays */
-    pthread_mutex_lock(&lock);
-    bool create_threads = thread_count < MAX_THREADS;
-    if(create_threads)
-    {
-        thread_count++;
-    }
-    pthread_mutex_unlock(&lock);
 
-    if (create_threads)
+    if (depth * (depth + 1) < MAX_THREADS)
     {
         pthread_t threads[2];
         struct thread_args args[2];
-
 
         if (low < pivot_index)
         {
             args[0].v = v;
             args[0].low = low;
             args[0].high = pivot_index - 1;
+            args[0].depth = depth + 1;
+
             pthread_create(&(threads[0]), NULL, thread_quicksort, (void *)&args[0]);
-        }
-        else
-        {
-            pthread_mutex_lock(&lock);
-            thread_count--;
-            pthread_mutex_unlock(&lock);
         }
 
         if (pivot_index < high)
@@ -160,30 +148,20 @@ void *thread_quicksort(void *buf)
             args[1].v = v;
             args[1].low = pivot_index + 1;
             args[1].high = high;
-            thread_quicksort(&args[1]);
-            //pthread_create(&(threads[1]), NULL, thread_quicksort, (void *)&args[1]);
+            args[1].depth = depth + 1;
+
+            //thread_quicksort(&args[1]);
+            pthread_create(&(threads[1]), NULL, thread_quicksort, (void *)&args[1]);
         }
-        // else
-        // {
-        //     pthread_mutex_lock(&lock);
-        //     thread_count--;
-        //     pthread_mutex_unlock(&lock);
-        // }
 
         if (low < pivot_index)
         {
             pthread_join(threads[0], NULL);
-            pthread_mutex_lock(&lock);
-            thread_count --;
-            pthread_mutex_unlock(&lock);
         }
-        // if (pivot_index < high)
-        // {
-        //     pthread_join(threads[1], NULL);
-        //     pthread_mutex_lock(&lock);
-        //     thread_count--;
-        //     pthread_mutex_unlock(&lock);
-        // }
+        if (pivot_index < high)
+        {
+            pthread_join(threads[1], NULL);
+        }
         
     }
     else
@@ -209,6 +187,7 @@ int main(int argc, char **argv)
     args.v = v;
     args.low = 0;
     args.high = MAX_ITEMS - 1;
+    args.depth = 0;
     thread_quicksort((void*)&args);
     double endTime = get_time();
 
