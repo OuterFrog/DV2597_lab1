@@ -40,6 +40,7 @@ unsigned int init_num_threads;
 /* forward declarations */
 void work(void);
 void Init_Matrix(void);
+void Init_Matrix_Par(void);
 void Print_Matrix(void);
 void Init_Default(void);
 int Read_Options(int, char **);
@@ -51,7 +52,7 @@ int main(int argc, char **argv)
 
     Init_Default();           /* Init default values	*/
     Read_Options(argc, argv); /* Read arguments	*/
-    Init_Matrix();            /* Init the matrix	*/
+    Init_Matrix_Par();            /* Init the matrix	*/
     work();
     if (PRINT == 1)
         Print_Matrix();
