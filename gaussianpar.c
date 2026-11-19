@@ -52,7 +52,7 @@ int main(int argc, char **argv)
 
     Init_Default();           /* Init default values	*/
     Read_Options(argc, argv); /* Read arguments	*/
-    Init_Matrix_Par();            /* Init the matrix	*/
+    Init_Matrix();            /* Init the matrix	*/
     work();
     if (PRINT == 1)
         Print_Matrix();
