@@ -8,6 +8,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <pthread.h>
+#include <assert.h>
 
 #define MAX_SIZE 4096
 #define THREAD_COUNT 8
@@ -33,6 +34,8 @@ double y[MAX_SIZE]; /* vector y             */
 
 unsigned int global_rows_per_thread = MAX_SIZE / THREAD_COUNT;
 unsigned int num_threads;
+
+unsigned int init_num_threads;
 
 /* forward declarations */
 void work(void);
@@ -71,13 +74,13 @@ inline void thread_work_cyclic_block(const unsigned int id, const unsigned int k
     // block-cyclic
     for (int i = k + 1 + id * ROWS_PER_CYCLE; i < N; i += THREAD_COUNT * ROWS_PER_CYCLE)
     {
-        for (int offset = 0; offset < ROWS_PER_CYCLE; offset++)
+        for (int offset = 0; offset < ROWS_PER_CYCLE && i + offset < N; offset++)
         {
             int row = i + offset;
 
             for (int j = k + 1; j < N; j++)
-                A[row][j] = A[row][j] - A[i][k] * A[k][j]; /* Elimination step */
-            b[row] = b[row] - A[i][k] * y[k];
+                A[row][j] = A[row][j] - A[row][k] * A[k][j]; /* Elimination step */
+            b[row] = b[row] - A[row][k] * y[k];
             A[row][k] = 0.0;
         }
     }
@@ -164,6 +167,30 @@ void work(void)
         }
 
     }
+
+    free(threads);
+    free(args);
+}
+
+void *init_multithreaded(void *buf)
+{
+    unsigned long row = (unsigned long)buf;
+
+    assert(N % init_num_threads == 0);
+    int per_thread = N / init_num_threads;
+
+    for (int i = row * per_thread; i < (row +  1) * per_thread; i++)
+    {
+        for (int j = 0; j < N; j++)
+        {
+            if (i == j) /* diagonal dominance */
+                A[i][j] = 5.0;
+            else
+                A[i][j] = 2.0;
+        }
+    }
+
+    return NULL;
 }
 
 void Init_Matrix()
@@ -190,16 +217,22 @@ void Init_Matrix()
     }
     if (strcmp(Init, "fast") == 0)
     {
-        for (i = 0; i < N; i++)
+        init_num_threads = N < 512 ? 1 : 4;
+        pthread_t *threads;
+        threads = malloc(init_num_threads * sizeof(pthread_t));
+
+        unsigned long id;
+        for (id = 0; id < init_num_threads; id++)
         {
-            for (j = 0; j < N; j++)
-            {
-                if (i == j) /* diagonal dominance */
-                    A[i][j] = 5.0;
-                else
-                    A[i][j] = 2.0;
-            }
+            pthread_create(&(threads[id]), NULL, init_multithreaded, (void *)id);
         }
+
+        for (id = 0; id < init_num_threads; id++)
+        {
+            pthread_join(threads[id], NULL);
+        }
+
+        free(threads);
     }
 
     /* Initialize vectors b and y */
