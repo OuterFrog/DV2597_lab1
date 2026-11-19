@@ -172,7 +172,7 @@ void work(void)
     free(args);
 }
 
-void *init_multithreaded(void *buf)
+void *init_multithreaded_fast(void *buf)
 {
     unsigned long row = (unsigned long)buf;
 
@@ -193,6 +193,27 @@ void *init_multithreaded(void *buf)
     return NULL;
 }
 
+void *init_multithreaded_rand(void *buf)
+{
+    unsigned long row = (unsigned long)buf;
+
+    assert(N % init_num_threads == 0);
+    int per_thread = N / init_num_threads;
+
+    for (int i = row * per_thread; i < (row + 1) * per_thread; i++)
+    {
+        for (int j = 0; j < N; j++)
+        {
+            if (i == j) /* diagonal dominance */
+                A[i][j] = (double)(rand() % maxnum) + 5.0;
+            else
+                A[i][j] = (double)(rand() % maxnum) + 1.0;
+        }
+    }
+
+    return NULL;
+}
+
 void Init_Matrix()
 {
     int i, j;
@@ -204,16 +225,22 @@ void Init_Matrix()
 
     if (strcmp(Init, "rand") == 0)
     {
-        for (i = 0; i < N; i++)
+        init_num_threads = N < 512 ? 1 : 8;
+        pthread_t *threads;
+        threads = malloc(init_num_threads * sizeof(pthread_t));
+
+        unsigned long id;
+        for (id = 0; id < init_num_threads; id++)
         {
-            for (j = 0; j < N; j++)
-            {
-                if (i == j) /* diagonal dominance */
-                    A[i][j] = (double)(rand() % maxnum) + 5.0;
-                else
-                    A[i][j] = (double)(rand() % maxnum) + 1.0;
-            }
+            pthread_create(&(threads[id]), NULL, init_multithreaded_rand, (void *)id);
         }
+
+        for (id = 0; id < init_num_threads; id++)
+        {
+            pthread_join(threads[id], NULL);
+        }
+
+        free(threads);
     }
     if (strcmp(Init, "fast") == 0)
     {
@@ -224,7 +251,7 @@ void Init_Matrix()
         unsigned long id;
         for (id = 0; id < init_num_threads; id++)
         {
-            pthread_create(&(threads[id]), NULL, init_multithreaded, (void *)id);
+            pthread_create(&(threads[id]), NULL, init_multithreaded_fast, (void *)id);
         }
 
         for (id = 0; id < init_num_threads; id++)
