@@ -192,7 +192,7 @@ int main(int argc, char **argv)
     thread_quicksort((void*)&args);
     double endTime = get_time();
 
-    printf("Parellel real time: %f\n", endTime - startTime);
+    printf("Parallel real time: %f\n", endTime - startTime);
 
     // print_array();
 }
