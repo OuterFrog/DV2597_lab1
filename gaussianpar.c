@@ -11,7 +11,7 @@
 
 #define MAX_SIZE 4096
 #define THREAD_COUNT 8
-#define ROWS_PER_CYCLE 128
+#define ROWS_PER_CYCLE 64
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 
@@ -68,7 +68,7 @@ inline void thread_work_cyclic(const unsigned int id, const unsigned int k)
 
 inline void thread_work_cyclic_block(const unsigned int id, const unsigned int k)
 {
-    // cyclic
+    // block-cyclic
     for (int i = k + 1 + id * ROWS_PER_CYCLE; i < N; i += THREAD_COUNT * ROWS_PER_CYCLE)
     {
         for (int offset = 0; offset < ROWS_PER_CYCLE; offset++)
@@ -136,7 +136,7 @@ void work(void)
         y[k] = b[k] / A[k][k];
         A[k][k] = 1.0;
 
-        if(N - k > ROWS_PER_CYCLE * THREAD_COUNT / 4){
+        if(N - k > ROWS_PER_CYCLE * THREAD_COUNT / 2){
             // num_threads = THREAD_COUNT; // MIN(, (N - k) / 64);
 
             for (id = 0; id < THREAD_COUNT; id++)
