@@ -136,7 +136,7 @@ void work(void)
         y[k] = b[k] / A[k][k];
         A[k][k] = 1.0;
 
-        if(N - k > ROWS_PER_CYCLE * THREAD_COUNT / 2){
+        if(N - k > ROWS_PER_CYCLE * THREAD_COUNT / 4){
             // num_threads = THREAD_COUNT; // MIN(, (N - k) / 64);
 
             for (id = 0; id < THREAD_COUNT; id++)
