@@ -194,5 +194,14 @@ int main(int argc, char **argv)
 
     printf("Parallel real time: %f\n", endTime - startTime);
 
+    if (check_sort(v, MAX_ITEMS) != 0)
+    {
+        printf("failed to sort\n");
+    }
+    else
+    {
+        printf("Sorted\n");
+    }
+
     // print_array();
 }
