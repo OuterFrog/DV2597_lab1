@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <stdbool.h>
+#include <math.h>
 
 #include "qsortcommon.h"
 
@@ -128,7 +129,7 @@ void *thread_quicksort(void *buf)
 
     /* sort the two sub arrays */
 
-    if (depth * (depth + 1) + 2 < MAX_THREADS)
+    if (pow(2, depth + 1) - 1 + 2 < MAX_THREADS) 
     {
         pthread_t threads[2];
         struct thread_args args[2];
