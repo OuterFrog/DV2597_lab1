@@ -226,7 +226,7 @@ void Init_Matrix_Par()
 
     if (strcmp(Init, "rand") == 0)
     {
-        init_num_threads = N < 512 ? 1 : 4;
+        init_num_threads = N < 512 ? 1 : 2;
         pthread_t *threads;
         threads = malloc(init_num_threads * sizeof(pthread_t));
 
