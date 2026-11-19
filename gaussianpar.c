@@ -11,6 +11,9 @@
 
 #define MAX_SIZE 4096
 #define THREAD_COUNT 4
+#define ROWS_PER_CYCLE 16
+
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
 
 struct thread_args
 {
@@ -29,6 +32,7 @@ double b[MAX_SIZE]; /* vector b             */
 double y[MAX_SIZE]; /* vector y             */
 
 unsigned int global_rows_per_thread = MAX_SIZE / THREAD_COUNT;
+unsigned int num_threads;
 
 /* forward declarations */
 void work(void);
@@ -62,6 +66,23 @@ inline void thread_work_cyclic(const unsigned int id, const unsigned int k)
     }
 }
 
+inline void thread_work_cyclic_block(const unsigned int id, const unsigned int k)
+{
+    // cyclic
+    for (int i = k + 1 + id * ROWS_PER_CYCLE; i < N; i += THREAD_COUNT * ROWS_PER_CYCLE)
+    {
+        for (int offset = 0; offset < ROWS_PER_CYCLE; offset++)
+        {
+            int row = i + offset;
+
+            for (int j = k + 1; j < N; j++)
+                A[row][j] = A[row][j] - A[i][k] * A[k][j]; /* Elimination step */
+            b[row] = b[row] - A[i][k] * y[k];
+            A[row][k] = 0.0;
+        }
+    }
+}
+
 inline void thread_work_block(const unsigned int id, const unsigned int k)
 {
     // block-based
@@ -87,9 +108,11 @@ void* thread_work(void* buf)
     unsigned int k = args->k;
 
     //rows_per_thread = N / THREAD_COUNT;
-    thread_work_block(id, k);
+    //thread_work_block(id, k);
 
     //thread_work_cyclic(id, k);
+
+    thread_work_cyclic_block(id, k);
 
     return NULL;
 }
@@ -113,7 +136,9 @@ void work(void)
         y[k] = b[k] / A[k][k];
         A[k][k] = 1.0;
 
-        if(N - k > 0){
+        if(N - k > ROWS_PER_CYCLE * THREAD_COUNT / 4){
+            // num_threads = THREAD_COUNT; // MIN(, (N - k) / 64);
+
             for (id = 0; id < THREAD_COUNT; id++)
             {
                 args[id].id = id;
