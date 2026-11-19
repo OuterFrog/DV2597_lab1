@@ -31,7 +31,7 @@ struct thread_args
 
 static int *v;
 
-#define MAX_THREADS 2048
+#define MAX_THREADS 8192
 long thread_count = 0;
 pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
