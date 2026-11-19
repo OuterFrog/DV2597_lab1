@@ -33,7 +33,7 @@ struct thread_args
 
 static int *v;
 
-#define MAX_THREADS 16384
+#define MAX_THREADS 4096
 
 static void
 print_array(void)
