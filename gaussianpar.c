@@ -10,8 +10,8 @@
 #include <pthread.h>
 
 #define MAX_SIZE 4096
-#define THREAD_COUNT 4
-#define ROWS_PER_CYCLE 64
+#define THREAD_COUNT 8
+#define ROWS_PER_CYCLE 128
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 
