@@ -206,3 +206,7 @@ int main(int argc, char **argv)
 
     // print_array();
 }
+
+// sequential: Sequential real time: 8.972906
+// parallel: Parallel real time: 1.778353
+// Speedup: 5,04
