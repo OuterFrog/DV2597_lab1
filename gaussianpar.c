@@ -12,7 +12,7 @@
 
 #define MAX_SIZE 4096
 #define THREAD_COUNT 4
-#define ROWS_PER_CYCLE 32
+#define ROWS_PER_CYCLE 64
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 
