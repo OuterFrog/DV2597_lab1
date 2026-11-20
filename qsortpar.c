@@ -128,12 +128,12 @@ void *thread_quicksort(void *buf)
     pivot_index = partition(v, low, high, pivot_index);
 
     /* sort the two sub arrays */
-
-    if (pow(2, depth + 1) - 1 + 2 < MAX_THREADS) 
+    if (pow(2, depth + 1) - 1 + 2 < MAX_THREADS) // calculate if it can create two more threads without going over budget
     {
         pthread_t threads[2];
         struct thread_args args[2];
 
+        // create threads
         if (low < pivot_index)
         {
             args[0].v = v;
@@ -155,6 +155,7 @@ void *thread_quicksort(void *buf)
             pthread_create(&(threads[1]), NULL, thread_quicksort, (void *)&args[1]);
         }
 
+        // join threads
         if (low < pivot_index)
         {
             pthread_join(threads[0], NULL);
@@ -181,7 +182,6 @@ int main(int argc, char **argv)
 {
     init_array();
     // print_array();
-    //quick_sort(v, 0, MAX_ITEMS - 1);
 
     double startTime = get_time();
     struct thread_args args;
@@ -192,6 +192,7 @@ int main(int argc, char **argv)
     thread_quicksort((void*)&args);
     double endTime = get_time();
 
+    // calculate work time
     printf("Parallel real time: %f\n", endTime - startTime);
 
     if (check_sort(v, MAX_ITEMS) != 0)
