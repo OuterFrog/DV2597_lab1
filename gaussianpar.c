@@ -14,6 +14,8 @@
 #define THREAD_COUNT 4
 #define ROWS_PER_CYCLE 64
 
+#include "qsortcommon.h"
+
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 
 struct thread_args
@@ -53,7 +55,12 @@ int main(int argc, char **argv)
     Init_Default();           /* Init default values	*/
     Read_Options(argc, argv); /* Read arguments	*/
     Init_Matrix();            /* Init the matrix	*/
+
+    double startTime = get_time();
     work();
+    double endTime = get_time();
+    printf("Parallel real time: %f\n", endTime - startTime);
+
     if (PRINT == 1)
         Print_Matrix();
 }
